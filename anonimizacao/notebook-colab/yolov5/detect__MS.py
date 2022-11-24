@@ -163,7 +163,6 @@ def run(
                 for c in det[:, 5].unique():
                     n = (det[:, 5] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
-
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
                     if save_txt:  # Write to file
@@ -178,7 +177,8 @@ def run(
                         annotator.box_label(xyxy, label, color=colors(c, True))
                     if save_crop:
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
-
+                
+           
             # Stream results
             im0 = annotator.result()
             if view_img:
@@ -210,7 +210,6 @@ def run(
 
         # Print time (inference-only)
         LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
-        
 		
         ## shutil.copy(p, dest_dir)
         ## os.remove(p)
