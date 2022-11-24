@@ -92,7 +92,7 @@ def run(
 
     start_time = time.time()
     # Directories
-    save_dir =  increment_path(Path(project) / name, exist_ok=exist_ok) # Path('/dbfs/mnt/tempdataservice/landing-zone/outputs')# increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
+    save_dir =  Path(project)# increment_path(Path(project) / name, exist_ok=exist_ok) # Path('/dbfs/mnt/tempdataservice/landing-zone/outputs')# increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
     (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
     
     ## dest_dir = pos_anonimizar
