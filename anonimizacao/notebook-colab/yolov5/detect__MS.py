@@ -114,7 +114,8 @@ def run(
     else:
         dataset = LoadImages(source, img_size=imgsz, stride=stride, auto=pt, vid_stride=vid_stride)
     vid_path, vid_writer = [None] * bs, [None] * bs
-
+    
+    dict_conf = {}
     total_files = dataset.nf
     # Run inference
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
@@ -163,9 +164,14 @@ def run(
                 for c in det[:, 5].unique():
                     n = (det[:, 5] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
-
+                list_detect_conf = []
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
+                    actual_detect = {
+                        'classe': ('%g').rstrip() % cls,
+                        'conf': ('%g').rstrip() % conf
+                    }
+                    list_detect_conf.append(actual_detect)
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                         line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
@@ -178,6 +184,10 @@ def run(
                         annotator.box_label(xyxy, label, color=colors(c, True))
                     if save_crop:
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
+            
+            dict_conf.update({
+                p.stem: list_detect_conf
+            })
 
             # Stream results
             im0 = annotator.result()
@@ -224,6 +234,7 @@ def run(
     if update:
         strip_optimizer(weights[0])  # update model (to fix SourceChangeWarning)
     
+    print("dict_conf", dict_conf)
 
     #shutil.move(src, dst)
     # path to source directory
