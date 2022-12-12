@@ -32,6 +32,8 @@ import sys
 from pathlib import Path
 import shutil
 import time
+from datetime import datetime
+import json
 
 import torch
 
@@ -115,7 +117,19 @@ def run(
         dataset = LoadImages(source, img_size=imgsz, stride=stride, auto=pt, vid_stride=vid_stride)
     vid_path, vid_writer = [None] * bs, [None] * bs
     
+    
+    
+    
+    data_execucao = datetime.now()
+    data_ddmmyyy_hhmmss = data_execucao.strftime("%d/%m/%Y %H:%M:%S")
+    data_ddmmyy = data_execucao.strftime("%d_%m_%Y")
+    
+    dict_execucao = {
+        'data execucao': data_ddmmyyy_hhmmss
+    }
+    print(dict_execucao)
     dict_conf = {}
+    list_detect_conf = []
     total_files = dataset.nf
     # Run inference
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
@@ -125,6 +139,9 @@ def run(
             im = torch.from_numpy(im).to(model.device)
             im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
             im /= 255  # 0 - 255 to 0.0 - 1.0
+            print(im.shape)
+            height = im.shape[1]
+            width = im.shape[2]
             if len(im.shape) == 3:
                 im = im[None]  # expand for batch dim
 
@@ -139,7 +156,7 @@ def run(
 
         # Second-stage classifier (optional)
         # pred = utils.general.apply_classifier(pred, classifier_model, im, im0s)
-
+        
         # Process predictions
         for i, det in enumerate(pred):  # per image
             seen += 1
@@ -164,17 +181,35 @@ def run(
                 for c in det[:, 5].unique():
                     n = (det[:, 5] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
-                list_detect_conf = []
+                
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
+                    xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+                    line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
+                    
+                    x = xywh[0]
+                    y = xywh[1]
+                    w = xywh[2]
+                    h = xywh[3]
+                
+                    x_start = int((x - (w/2))*width)
+                    y_start = int((y - (h/2))*height)
+                    x_end = int((x + (w/2))*width)
+                    y_end = int((y + (h/2))*height)
+                    
+                    
                     actual_detect = {
+                        'frame': p.stem,
                         'classe': ('%g').rstrip() % cls,
-                        'conf': ('%g').rstrip() % conf
+                        'conf': ('%g').rstrip() % conf,
+                        'x_start': x_start,
+                        'y_start': y_start,
+                        'x_end': x_end,
+                        'y_end': y_end                        
                     }
                     list_detect_conf.append(actual_detect)
                     if save_txt:  # Write to file
-                        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                        line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
+                        
                         with open(f'{txt_path}.txt', 'a') as f:
                             f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
@@ -185,9 +220,9 @@ def run(
                     if save_crop:
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
             
-            dict_conf.update({
-                p.stem: list_detect_conf
-            })
+            #dict_conf.update({
+            #    p.stem: list_detect_conf
+            #})
 
             # Stream results
             im0 = annotator.result()
@@ -234,7 +269,9 @@ def run(
     if update:
         strip_optimizer(weights[0])  # update model (to fix SourceChangeWarning)
     
-    print("dict_conf", dict_conf)
+    
+    
+    
 
     #shutil.move(src, dst)
     # path to source directory
@@ -261,6 +298,17 @@ def run(
     print('Tempo de execução:', elapsed_time, 'segundos')
     print("Tempo por arquivo: ", seen / elapsed_time)
     print("tempo a cada 100 arquivos: ", 100 * elapsed_time / seen )
+    
+    dict_execucao.update({
+        'duracao': elapsed_time,
+        'arquivos processados': seen,
+        'arquivos originais': total_files,
+        'frames': list_detect_conf
+    })
+    print("dict_execucao", dict_execucao)
+    
+    with open(f'/dbfs/mnt/tempdataservice/landing-zone/reports/report_{data_ddmmyy}.json', 'w') as output:
+        json.dump(dict_execucao, output)
 
 def parse_opt():
     parser = argparse.ArgumentParser()
