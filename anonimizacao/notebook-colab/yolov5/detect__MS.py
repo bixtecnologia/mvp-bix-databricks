@@ -125,7 +125,9 @@ def run(
     data_ddmmyy = data_execucao.strftime("%d_%m_%Y")
     
     dict_execucao = {
-        'data execucao': data_ddmmyyy_hhmmss
+        'data execucao': data_ddmmyyy_hhmmss,
+        'model': 'anonimizacao',
+        'model-version': 'testes001'
     }
     print(dict_execucao)
     dict_conf = {}
@@ -191,21 +193,16 @@ def run(
                     y = xywh[1]
                     w = xywh[2]
                     h = xywh[3]
-                
-                    x_start = int((x - (w/2))*width)
-                    y_start = int((y - (h/2))*height)
-                    x_end = int((x + (w/2))*width)
-                    y_end = int((y + (h/2))*height)
                     
                     
                     actual_detect = {
                         'frame': p.stem,
                         'classe': ('%g').rstrip() % cls,
                         'conf': ('%g').rstrip() % conf,
-                        'x_start': x_start,
-                        'y_start': y_start,
-                        'x_end': x_end,
-                        'y_end': y_end                        
+                        'x': x,
+                        'y': y,
+                        'w': w,
+                        'h': h                        
                     }
                     list_detect_conf.append(actual_detect)
                     if save_txt:  # Write to file
