@@ -184,6 +184,8 @@ def run(
                     n = (det[:, 5] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
                 
+
+                ''' 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
                     xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
@@ -194,11 +196,6 @@ def run(
                     w = xywh[2]
                     h = xywh[3]
                     
-                    ''''
-                    -------------------------------------------------
-                                         REPORT:
-                    -------------------------------------------------
-                    '''
                     actual_detect = {
                         'frame': p.stem,
                         'classe': ('%g').rstrip() % cls,
@@ -220,7 +217,8 @@ def run(
                         annotator.box_label(xyxy, label, color=colors(c, True))
                     if save_crop:
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
-            
+                    '''
+
             #dict_conf.update({
             #    p.stem: list_detect_conf
             #})
