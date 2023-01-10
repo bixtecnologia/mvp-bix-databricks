@@ -306,8 +306,8 @@ def run(
     })
     print("dict_execucao", dict_execucao)
     
-    with open(f'{report}/report_{data_ddmmyy}.json', 'w') as output:
-        json.dump(dict_execucao, output)
+    #with open(f'{report}/report_{data_ddmmyy}.json', 'w') as output:
+    #    json.dump(dict_execucao, output)
 
 def parse_opt():
     parser = argparse.ArgumentParser()
