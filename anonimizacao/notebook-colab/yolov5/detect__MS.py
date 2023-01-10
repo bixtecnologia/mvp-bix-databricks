@@ -306,8 +306,9 @@ def run(
     })
     print("dict_execucao", dict_execucao)
     
-    #with open(f'{report}/report_{data_ddmmyy}.json', 'w') as output:
-    #    json.dump(dict_execucao, output)
+    if report:
+        with open(f'{report}/report_{data_ddmmyy}.json', 'w') as output:
+            json.dump(dict_execucao, output)
 
 def parse_opt():
     parser = argparse.ArgumentParser()
@@ -338,7 +339,7 @@ def parse_opt():
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
     parser.add_argument('--vid-stride', type=int, default=1, help='video frame-rate stride')
-    parser.add_argument('--report', type=str, default=ROOT / 'runs/detect/pos_anonimizar', help='destination path for report')
+    parser.add_argument('--report', type=str, default=ROOT / '', help='destination path for report')
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
     print_args(vars(opt))
